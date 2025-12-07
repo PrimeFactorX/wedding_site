@@ -9,6 +9,9 @@ import CategoryDetail from "./pages/CategoryDetail";
 import BusinessList from "./pages/BusinessList";
 import BusinessProfile from "./pages/BusinessProfile";
 import AuthPage from "./pages/AuthPage";
+import CategoriesPage from "./pages/CategoriesPage";
+import AboutPage from "./pages/AboutPage";
+import BusinessForPage from "./pages/BusinessForPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -22,6 +25,9 @@ const App = () => (
         <AuthProvider>
           <Routes>
             <Route path="/" element={<Index />} />
+            <Route path="/categories" element={<CategoriesPage />} />
+            <Route path="/about" element={<AboutPage />} />
+            <Route path="/business" element={<BusinessForPage />} />
             <Route path="/category/:slug" element={<CategoryDetail />} />
             <Route path="/businesses/:categorySlug/:subService" element={<BusinessList />} />
             <Route path="/business/:id" element={<BusinessProfile />} />

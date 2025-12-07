@@ -19,7 +19,7 @@ const CTASection = () => {
 
         <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
           <Link
-            to="/auth?mode=register&type=business"
+            to="/auth?mode=register"
             className="button-gradient text-primary-foreground px-8 py-4 rounded-full font-medium text-lg transition-all duration-300 hover:scale-105 hover:shadow-xl flex items-center gap-2 group"
           >
             <span>Biznes kimi qeydiyyatdan keç</span>
