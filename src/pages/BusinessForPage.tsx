@@ -175,7 +175,7 @@ const BusinessForPage = () => {
         </section>
 
         {/* Pricing Section */}
-        <section className="px-4 py-16 bg-primary/5">
+        <section id="pricing" className="px-4 py-16 bg-primary/5">
           <div className="max-w-6xl mx-auto">
             <div className="text-center mb-12">
               <h2 className="font-serif text-3xl md:text-4xl text-foreground mb-4">
@@ -187,7 +187,7 @@ const BusinessForPage = () => {
             </div>
 
             <div className="grid md:grid-cols-3 gap-6">
-              {plans.map((plan) => (
+              {plans.map((plan, index) => (
                 <div
                   key={plan.name}
                   className={`rounded-2xl p-6 ${
@@ -213,16 +213,32 @@ const BusinessForPage = () => {
                       </li>
                     ))}
                   </ul>
-                  <Link
-                    to="/auth?mode=register"
-                    className={`block text-center py-3 rounded-full font-medium transition-all duration-300 ${
-                      plan.highlighted
-                        ? "bg-background text-foreground hover:bg-background/90"
-                        : "button-gradient text-primary-foreground"
-                    }`}
-                  >
-                    Başla
-                  </Link>
+                  {index === 0 ? (
+                    <Link
+                      to="/auth?mode=register"
+                      className={`block text-center py-3 rounded-full font-medium transition-all duration-300 ${
+                        plan.highlighted
+                          ? "bg-background text-foreground hover:bg-background/90"
+                          : "button-gradient text-primary-foreground"
+                      }`}
+                    >
+                      Pulsuz başla
+                    </Link>
+                  ) : (
+                    <button
+                      onClick={() => {
+                        const el = document.getElementById('pricing');
+                        el?.scrollIntoView({ behavior: 'smooth' });
+                      }}
+                      className={`w-full text-center py-3 rounded-full font-medium transition-all duration-300 ${
+                        plan.highlighted
+                          ? "bg-background text-foreground hover:bg-background/90"
+                          : "button-gradient text-primary-foreground"
+                      }`}
+                    >
+                      Tezliklə
+                    </button>
+                  )}
                 </div>
               ))}
             </div>
