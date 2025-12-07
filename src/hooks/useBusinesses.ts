@@ -119,21 +119,40 @@ export const useBusinessReviews = (businessId?: string) => {
     queryFn: async () => {
       if (!businessId) return [];
 
-      const { data, error } = await supabase
+      const { data: reviews, error: reviewsError } = await supabase
         .from("reviews")
-        .select(`
-          *,
-          profiles:user_id (
-            full_name,
-            avatar_url
-          ),
-          review_replies (*)
-        `)
+        .select(`*`)
         .eq("business_id", businessId)
         .order("created_at", { ascending: false });
 
-      if (error) throw error;
-      return data as Review[];
+      if (reviewsError) throw reviewsError;
+
+      // Fetch review replies
+      const reviewIds = reviews.map(r => r.id);
+      const { data: replies } = await supabase
+        .from("review_replies")
+        .select("*")
+        .in("review_id", reviewIds);
+
+      // Fetch profiles for all review authors
+      const userIds = [...new Set(reviews.map(r => r.user_id))];
+      const { data: profiles } = await supabase
+        .from("profiles")
+        .select("id, full_name, avatar_url")
+        .in("id", userIds);
+
+      const profileMap = new Map(profiles?.map(p => [p.id, p]) || []);
+      const repliesMap = new Map<string, ReviewReply[]>();
+      replies?.forEach(reply => {
+        const existing = repliesMap.get(reply.review_id) || [];
+        repliesMap.set(reply.review_id, [...existing, reply]);
+      });
+
+      return reviews.map(review => ({
+        ...review,
+        profiles: profileMap.get(review.user_id) || { full_name: null, avatar_url: null },
+        review_replies: repliesMap.get(review.id) || [],
+      })) as Review[];
     },
     enabled: !!businessId,
   });
@@ -181,10 +200,19 @@ export const useCreateReview = () => {
 export const useIncrementBusinessView = () => {
   return useMutation({
     mutationFn: async (businessId: string) => {
-      const { error } = await supabase.rpc("increment_business_views", {
-        business_id: businessId,
-      });
-      if (error) throw error;
+      // Direct update instead of RPC
+      const { data: business } = await supabase
+        .from("businesses")
+        .select("total_views")
+        .eq("id", businessId)
+        .maybeSingle();
+      
+      if (business) {
+        await supabase
+          .from("businesses")
+          .update({ total_views: (business.total_views || 0) + 1 })
+          .eq("id", businessId);
+      }
     },
   });
 };
