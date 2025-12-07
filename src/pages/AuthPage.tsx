@@ -26,7 +26,7 @@ const AuthPage = () => {
   // Redirect if already logged in
   useEffect(() => {
     if (!authLoading && user) {
-      navigate("/");
+      navigate("/dashboard");
     }
   }, [user, authLoading, navigate]);
 
@@ -51,7 +51,7 @@ const AuthPage = () => {
         }
 
         toast.success("Uğurla daxil oldunuz!");
-        navigate("/");
+        navigate("/dashboard");
       } else {
         const { error } = await supabase.auth.signUp({
           email: formData.email,
@@ -134,7 +134,7 @@ const AuthPage = () => {
           <div className="text-center mb-8">
             <Link to="/" className="inline-block">
               <span className="font-serif text-3xl font-semibold text-foreground">
-                Bayram
+                Memora
               </span>
               <span className="text-sm text-muted-foreground">.az</span>
             </Link>

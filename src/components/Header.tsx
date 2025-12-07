@@ -1,9 +1,11 @@
 import { Link } from "react-router-dom";
-import { Menu, X, User } from "lucide-react";
+import { Menu, X, User, LayoutDashboard } from "lucide-react";
 import { useState } from "react";
+import { useAuth } from "@/hooks/useAuth";
 
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const { user, loading } = useAuth();
 
   return (
     <header className="fixed top-0 left-0 right-0 z-50">
@@ -43,18 +45,30 @@ const Header = () => {
 
           {/* Auth Buttons */}
           <div className="hidden md:flex items-center gap-3">
-            <Link
-              to="/auth"
-              className="text-sm text-foreground/80 hover:text-foreground transition-colors px-4 py-2"
-            >
-              Daxil ol
-            </Link>
-            <Link
-              to="/auth?mode=register"
-              className="button-gradient text-primary-foreground text-sm px-5 py-2.5 rounded-full font-medium transition-all duration-300 hover:scale-105 hover:shadow-lg"
-            >
-              Qeydiyyat
-            </Link>
+            {!loading && user ? (
+              <Link
+                to="/dashboard"
+                className="button-gradient text-primary-foreground text-sm px-5 py-2.5 rounded-full font-medium transition-all duration-300 hover:scale-105 hover:shadow-lg flex items-center gap-2"
+              >
+                <LayoutDashboard className="w-4 h-4" />
+                Panel
+              </Link>
+            ) : (
+              <>
+                <Link
+                  to="/auth"
+                  className="text-sm text-foreground/80 hover:text-foreground transition-colors px-4 py-2"
+                >
+                  Daxil ol
+                </Link>
+                <Link
+                  to="/auth?mode=register"
+                  className="button-gradient text-primary-foreground text-sm px-5 py-2.5 rounded-full font-medium transition-all duration-300 hover:scale-105 hover:shadow-lg"
+                >
+                  Qeydiyyat
+                </Link>
+              </>
+            )}
           </div>
 
           {/* Mobile Menu Button */}
@@ -93,20 +107,33 @@ const Header = () => {
               Biznes üçün
             </Link>
             <div className="border-t border-border/30 pt-4 flex flex-col gap-2">
-              <Link
-                to="/auth"
-                className="text-center py-2.5 text-foreground/80 hover:text-foreground transition-colors"
-                onClick={() => setIsMenuOpen(false)}
-              >
-                Daxil ol
-              </Link>
-              <Link
-                to="/auth?mode=register"
-                className="button-gradient text-primary-foreground text-center py-2.5 rounded-full font-medium"
-                onClick={() => setIsMenuOpen(false)}
-              >
-                Qeydiyyat
-              </Link>
+              {!loading && user ? (
+                <Link
+                  to="/dashboard"
+                  className="button-gradient text-primary-foreground text-center py-2.5 rounded-full font-medium flex items-center justify-center gap-2"
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  <LayoutDashboard className="w-4 h-4" />
+                  Panel
+                </Link>
+              ) : (
+                <>
+                  <Link
+                    to="/auth"
+                    className="text-center py-2.5 text-foreground/80 hover:text-foreground transition-colors"
+                    onClick={() => setIsMenuOpen(false)}
+                  >
+                    Daxil ol
+                  </Link>
+                  <Link
+                    to="/auth?mode=register"
+                    className="button-gradient text-primary-foreground text-center py-2.5 rounded-full font-medium"
+                    onClick={() => setIsMenuOpen(false)}
+                  >
+                    Qeydiyyat
+                  </Link>
+                </>
+              )}
             </div>
           </nav>
         </div>
