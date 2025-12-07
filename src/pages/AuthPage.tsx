@@ -11,11 +11,9 @@ const AuthPage = () => {
   const { user, loading: authLoading } = useAuth();
   
   const initialMode = searchParams.get("mode") === "register" ? "register" : "login";
-  const userType = searchParams.get("type") === "business" ? "business" : "customer";
 
   const [mode, setMode] = useState<"login" | "register">(initialMode);
   const [showPassword, setShowPassword] = useState(false);
-  const [selectedRole, setSelectedRole] = useState<"customer" | "business">(userType);
   const [loading, setLoading] = useState(false);
 
   const [formData, setFormData] = useState({
@@ -63,7 +61,6 @@ const AuthPage = () => {
             data: {
               full_name: formData.name,
               phone: formData.phone,
-              role: selectedRole,
             },
           },
         });
@@ -144,7 +141,7 @@ const AuthPage = () => {
             <p className="text-muted-foreground mt-2">
               {mode === "login"
                 ? "Hesabınıza daxil olun"
-                : "Yeni hesab yaradın"}
+                : "Biznesinizi qeydiyyatdan keçirin"}
             </p>
           </div>
 
@@ -174,53 +171,12 @@ const AuthPage = () => {
               </button>
             </div>
 
-            {/* Role Selection (only for register) */}
-            {mode === "register" && (
-              <div className="mb-6">
-                <label className="block text-sm font-medium text-foreground mb-3">
-                  Sən kimsən?
-                </label>
-                <div className="grid grid-cols-2 gap-3">
-                  <button
-                    type="button"
-                    onClick={() => setSelectedRole("customer")}
-                    className={`p-4 rounded-xl border-2 transition-all text-left ${
-                      selectedRole === "customer"
-                        ? "border-primary bg-primary/10"
-                        : "border-border hover:border-primary/50"
-                    }`}
-                  >
-                    <User className="w-6 h-6 mb-2 text-foreground" />
-                    <div className="font-medium text-foreground">Müştəri</div>
-                    <div className="text-xs text-muted-foreground mt-1">
-                      Xidmət axtarıram
-                    </div>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setSelectedRole("business")}
-                    className={`p-4 rounded-xl border-2 transition-all text-left ${
-                      selectedRole === "business"
-                        ? "border-primary bg-primary/10"
-                        : "border-border hover:border-primary/50"
-                    }`}
-                  >
-                    <span className="text-2xl mb-2 block">🏪</span>
-                    <div className="font-medium text-foreground">Biznes</div>
-                    <div className="text-xs text-muted-foreground mt-1">
-                      Xidmət təklif edirəm
-                    </div>
-                  </button>
-                </div>
-              </div>
-            )}
-
             {/* Form */}
             <form onSubmit={handleSubmit} className="space-y-4">
               {mode === "register" && (
                 <div>
                   <label className="block text-sm font-medium text-foreground mb-1.5">
-                    Ad və soyad
+                    Biznes adı
                   </label>
                   <div className="relative">
                     <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
@@ -230,7 +186,7 @@ const AuthPage = () => {
                       onChange={(e) =>
                         setFormData({ ...formData, name: e.target.value })
                       }
-                      placeholder="Adınız"
+                      placeholder="Biznesinizin adı"
                       className="w-full pl-10 pr-4 py-3 rounded-xl border border-border bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
                       required
                     />
