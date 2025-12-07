@@ -1,16 +1,22 @@
-import { useState } from "react";
-import { Link, useSearchParams } from "react-router-dom";
-import { ArrowLeft, Mail, Lock, User, Phone, Eye, EyeOff } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Link, useSearchParams, useNavigate } from "react-router-dom";
+import { ArrowLeft, Mail, Lock, User, Phone, Eye, EyeOff, Loader2 } from "lucide-react";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 
 const AuthPage = () => {
   const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
+  const { user, loading: authLoading } = useAuth();
+  
   const initialMode = searchParams.get("mode") === "register" ? "register" : "login";
   const userType = searchParams.get("type") === "business" ? "business" : "customer";
 
   const [mode, setMode] = useState<"login" | "register">(initialMode);
   const [showPassword, setShowPassword] = useState(false);
   const [selectedRole, setSelectedRole] = useState<"customer" | "business">(userType);
+  const [loading, setLoading] = useState(false);
 
   const [formData, setFormData] = useState({
     email: "",
@@ -19,15 +25,95 @@ const AuthPage = () => {
     phone: "",
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
+  // Redirect if already logged in
+  useEffect(() => {
+    if (!authLoading && user) {
+      navigate("/");
+    }
+  }, [user, authLoading, navigate]);
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // For demo purposes
-    toast.success(
-      mode === "login"
-        ? "Uğurla daxil oldunuz!"
-        : "Qeydiyyat tamamlandı! E-poçtunuzu yoxlayın."
-    );
+    setLoading(true);
+
+    try {
+      if (mode === "login") {
+        const { error } = await supabase.auth.signInWithPassword({
+          email: formData.email,
+          password: formData.password,
+        });
+
+        if (error) {
+          if (error.message === "Invalid login credentials") {
+            toast.error("E-poçt və ya şifrə yanlışdır");
+          } else {
+            toast.error(error.message);
+          }
+          return;
+        }
+
+        toast.success("Uğurla daxil oldunuz!");
+        navigate("/");
+      } else {
+        const { error } = await supabase.auth.signUp({
+          email: formData.email,
+          password: formData.password,
+          options: {
+            emailRedirectTo: `${window.location.origin}/`,
+            data: {
+              full_name: formData.name,
+              phone: formData.phone,
+              role: selectedRole,
+            },
+          },
+        });
+
+        if (error) {
+          if (error.message.includes("already registered")) {
+            toast.error("Bu e-poçt artıq qeydiyyatdan keçib");
+          } else {
+            toast.error(error.message);
+          }
+          return;
+        }
+
+        toast.success("Qeydiyyat tamamlandı! Daxil olun.");
+        setMode("login");
+      }
+    } catch (error) {
+      toast.error("Xəta baş verdi. Yenidən cəhd edin.");
+    } finally {
+      setLoading(false);
+    }
   };
+
+  const handleGoogleLogin = async () => {
+    setLoading(true);
+    try {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options: {
+          redirectTo: `${window.location.origin}/`,
+        },
+      });
+
+      if (error) {
+        toast.error(error.message);
+      }
+    } catch (error) {
+      toast.error("Google ilə daxil olmaq alınmadı");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
@@ -235,8 +321,10 @@ const AuthPage = () => {
 
               <button
                 type="submit"
-                className="w-full button-gradient text-primary-foreground py-3.5 rounded-xl font-medium transition-all duration-300 hover:scale-[1.02] hover:shadow-lg"
+                disabled={loading}
+                className="w-full button-gradient text-primary-foreground py-3.5 rounded-xl font-medium transition-all duration-300 hover:scale-[1.02] hover:shadow-lg disabled:opacity-50 disabled:hover:scale-100 flex items-center justify-center gap-2"
               >
+                {loading && <Loader2 className="w-4 h-4 animate-spin" />}
                 {mode === "login" ? "Daxil ol" : "Qeydiyyatdan keç"}
               </button>
             </form>
@@ -251,8 +339,9 @@ const AuthPage = () => {
             {/* Social Login */}
             <button
               type="button"
-              className="w-full flex items-center justify-center gap-3 py-3 rounded-xl border border-border bg-background hover:bg-muted transition-colors"
-              onClick={() => toast.info("Google ilə daxil olmaq tezliklə əlavə olunacaq!")}
+              disabled={loading}
+              className="w-full flex items-center justify-center gap-3 py-3 rounded-xl border border-border bg-background hover:bg-muted transition-colors disabled:opacity-50"
+              onClick={handleGoogleLogin}
             >
               <svg className="w-5 h-5" viewBox="0 0 24 24">
                 <path
