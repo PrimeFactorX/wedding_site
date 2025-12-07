@@ -107,7 +107,7 @@ const BusinessProfile = () => {
 
   const handleWhatsApp = () => {
     const message = encodeURIComponent(
-      `Salam! Bayram.az platformasından yazıram. ${mockBusiness.name} haqqında məlumat almaq istəyirəm.`
+      `Salam! Memora.az platformasından yazıram. ${mockBusiness.name} haqqında məlumat almaq istəyirəm.`
     );
     window.open(
       `https://wa.me/${mockBusiness.whatsapp.replace(/\+/g, "")}?text=${message}`,

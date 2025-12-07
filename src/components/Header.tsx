@@ -12,7 +12,7 @@ const Header = () => {
           {/* Logo */}
           <Link to="/" className="flex items-center gap-2">
             <span className="font-serif text-2xl md:text-3xl font-semibold text-foreground">
-              Bayram
+              Memora
             </span>
             <span className="text-xs text-muted-foreground hidden sm:block">
               .az

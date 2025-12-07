@@ -10,7 +10,7 @@ const Footer = () => {
           <div className="md:col-span-1">
             <Link to="/" className="inline-block mb-4">
               <span className="font-serif text-2xl font-semibold text-foreground">
-                Bayram
+                Memora
               </span>
               <span className="text-xs text-muted-foreground">.az</span>
             </Link>
@@ -20,7 +20,7 @@ const Footer = () => {
             </p>
             <div className="flex items-center gap-4">
               <a
-                href="https://instagram.com/bayram.az"
+                href="https://instagram.com/memora.az"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="w-10 h-10 rounded-full bg-background/80 flex items-center justify-center text-foreground/70 hover:text-foreground hover:bg-primary/20 transition-all duration-300"
@@ -36,7 +36,7 @@ const Footer = () => {
                 <Phone className="w-5 h-5" />
               </a>
               <a
-                href="mailto:info@bayram.az"
+                href="mailto:info@memora.az"
                 className="w-10 h-10 rounded-full bg-background/80 flex items-center justify-center text-foreground/70 hover:text-foreground hover:bg-primary/20 transition-all duration-300"
               >
                 <Mail className="w-5 h-5" />
@@ -105,11 +105,11 @@ const Footer = () => {
               </li>
               <li className="flex items-center gap-2 text-sm text-muted-foreground">
                 <Mail className="w-4 h-4" />
-                <span>info@bayram.az</span>
+                <span>info@memora.az</span>
               </li>
               <li className="flex items-center gap-2 text-sm text-muted-foreground">
                 <Instagram className="w-4 h-4" />
-                <span>@bayram.az</span>
+                <span>@memora.az</span>
               </li>
             </ul>
           </div>
@@ -118,7 +118,7 @@ const Footer = () => {
         {/* Bottom */}
         <div className="mt-12 pt-8 border-t border-border/30 flex flex-col md:flex-row items-center justify-between gap-4">
           <p className="text-sm text-muted-foreground">
-            © {new Date().getFullYear()} Bayram.az — Bütün hüquqlar qorunur.
+            © {new Date().getFullYear()} Memora.az — Bütün hüquqlar qorunur.
           </p>
           <p className="text-sm text-muted-foreground flex items-center gap-1">
             <Heart className="w-4 h-4 text-primary" />
