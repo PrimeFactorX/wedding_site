@@ -146,9 +146,12 @@ export type Database = {
           is_active: boolean | null
           is_approved: boolean | null
           logo_url: string | null
+          max_price: number | null
+          min_price: number | null
           name: string
           owner_id: string
           phone: string | null
+          price_note: string | null
           total_reviews: number | null
           total_views: number | null
           updated_at: string
@@ -166,9 +169,12 @@ export type Database = {
           is_active?: boolean | null
           is_approved?: boolean | null
           logo_url?: string | null
+          max_price?: number | null
+          min_price?: number | null
           name: string
           owner_id: string
           phone?: string | null
+          price_note?: string | null
           total_reviews?: number | null
           total_views?: number | null
           updated_at?: string
@@ -186,9 +192,12 @@ export type Database = {
           is_active?: boolean | null
           is_approved?: boolean | null
           logo_url?: string | null
+          max_price?: number | null
+          min_price?: number | null
           name?: string
           owner_id?: string
           phone?: string | null
+          price_note?: string | null
           total_reviews?: number | null
           total_views?: number | null
           updated_at?: string
