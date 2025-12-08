@@ -28,7 +28,7 @@ const Footer = () => {
                 <Instagram className="w-5 h-5" />
               </a>
               <a
-                href="https://wa.me/994501234567"
+                href="https://wa.me/994507558603"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="w-10 h-10 rounded-full bg-background/80 flex items-center justify-center text-foreground/70 hover:text-foreground hover:bg-primary/20 transition-all duration-300"
@@ -36,7 +36,7 @@ const Footer = () => {
                 <Phone className="w-5 h-5" />
               </a>
               <a
-                href="mailto:info@memora.az"
+                href="mailto:infomemora@gmail.com"
                 className="w-10 h-10 rounded-full bg-background/80 flex items-center justify-center text-foreground/70 hover:text-foreground hover:bg-primary/20 transition-all duration-300"
               >
                 <Mail className="w-5 h-5" />
@@ -101,11 +101,11 @@ const Footer = () => {
             <ul className="space-y-3">
               <li className="flex items-center gap-2 text-sm text-muted-foreground">
                 <Phone className="w-4 h-4" />
-                <span>+994 50 123 45 67</span>
+                <span>+994 50 755 86 03</span>
               </li>
               <li className="flex items-center gap-2 text-sm text-muted-foreground">
                 <Mail className="w-4 h-4" />
-                <span>info@memora.az</span>
+                <span>infomemora@gmail.com</span>
               </li>
               <li className="flex items-center gap-2 text-sm text-muted-foreground">
                 <Instagram className="w-4 h-4" />

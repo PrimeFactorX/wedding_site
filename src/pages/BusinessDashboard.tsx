@@ -79,7 +79,8 @@ const BusinessDashboard = () => {
   const [categories, setCategories] = useState<Category[]>([]);
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [savingCategories, setSavingCategories] = useState(false);
-  
+  const [reviews, setReviews] = useState<any[]>([]);
+
   const logoInputRef = useRef<HTMLInputElement>(null);
   const coverInputRef = useRef<HTMLInputElement>(null);
   const mediaInputRef = useRef<HTMLInputElement>(null);
@@ -132,7 +133,7 @@ const BusinessDashboard = () => {
 
   const fetchBusinessData = async () => {
     if (!user) return;
-    
+
     try {
       const { data: existingBusiness, error: fetchError } = await supabase
         .from("businesses")
@@ -158,13 +159,13 @@ const BusinessDashboard = () => {
           max_price: existingBusiness.max_price?.toString() || "",
           price_note: existingBusiness.price_note || "",
         });
-        
+
         // Fetch media
         const { data: mediaData } = await supabase
           .from("business_media")
           .select("*")
           .eq("business_id", existingBusiness.id);
-        
+
         if (mediaData) {
           setMedia(mediaData);
         }
@@ -174,9 +175,20 @@ const BusinessDashboard = () => {
           .from("business_services")
           .select("subcategory_id")
           .eq("business_id", existingBusiness.id);
-        
+
         if (servicesData) {
           setSelectedCategories(servicesData.map((s) => s.subcategory_id));
+        }
+
+        // Fetch reviews
+        const { data: reviewsData } = await supabase
+          .from("reviews")
+          .select("*")
+          .eq("business_id", existingBusiness.id)
+          .order("created_at", { ascending: false });
+
+        if (reviewsData) {
+          setReviews(reviewsData);
         }
       }
     } catch (err) {
@@ -345,7 +357,7 @@ const BusinessDashboard = () => {
           .from("businesses")
           .update({ logo_url: url })
           .eq("id", business.id);
-        
+
         setBusiness({ ...business, logo_url: url });
         toast.success("Logo yükləndi!");
       }
@@ -368,7 +380,7 @@ const BusinessDashboard = () => {
           .from("businesses")
           .update({ cover_image_url: url })
           .eq("id", business.id);
-        
+
         setBusiness({ ...business, cover_image_url: url });
         toast.success("Üz qabığı şəkli yükləndi!");
       }
@@ -423,6 +435,78 @@ const BusinessDashboard = () => {
       toast.success("Şəkil silindi");
     } catch (err) {
       toast.error("Silinmədi");
+    }
+  };
+
+  const handleDeleteLogo = async () => {
+    if (!business?.logo_url) return;
+    try {
+      const urlParts = business.logo_url.split("/business-media/");
+      if (urlParts.length > 1) {
+        await supabase.storage.from("business-media").remove([urlParts[1]]);
+      }
+      await supabase.from("businesses").update({ logo_url: null }).eq("id", business.id);
+      setBusiness({ ...business, logo_url: null });
+      toast.success("Logo silindi");
+    } catch (err) {
+      toast.error("Logo silinmədi");
+    }
+  };
+
+  const handleDeleteCover = async () => {
+    if (!business?.cover_image_url) return;
+    try {
+      const urlParts = business.cover_image_url.split("/business-media/");
+      if (urlParts.length > 1) {
+        await supabase.storage.from("business-media").remove([urlParts[1]]);
+      }
+      await supabase.from("businesses").update({ cover_image_url: null }).eq("id", business.id);
+      setBusiness({ ...business, cover_image_url: null });
+      toast.success("Üz qabığı silindi");
+    } catch (err) {
+      toast.error("Üz qabığı silinmədi");
+    }
+  };
+
+  const handleDeleteReview = async (reviewId: string, reviewComment: string) => {
+    try {
+      // Try to parse comment to get images
+      let images: string[] = [];
+      try {
+        if (reviewComment && reviewComment.startsWith("{")) {
+          const parsed = JSON.parse(reviewComment);
+          images = parsed.images || [];
+        }
+      } catch (e) { }
+
+      // Delete images from storage
+      for (const imgUrl of images) {
+        const urlParts = imgUrl.split("/business-media/");
+        if (urlParts.length > 1) {
+          await supabase.storage.from("business-media").remove([urlParts[1]]);
+        }
+      }
+
+      // Delete review from database
+      await supabase.from("reviews").delete().eq("id", reviewId);
+      setReviews((prev) => prev.filter((r) => r.id !== reviewId));
+
+      // Update average rating
+      if (business) {
+        const remainingReviews = reviews.filter((r) => r.id !== reviewId);
+        const avgRating = remainingReviews.length > 0
+          ? remainingReviews.reduce((sum, r) => sum + r.rating, 0) / remainingReviews.length
+          : 0;
+        await supabase
+          .from("businesses")
+          .update({ average_rating: avgRating, total_reviews: remainingReviews.length })
+          .eq("id", business.id);
+        setBusiness({ ...business, average_rating: avgRating, total_reviews: remainingReviews.length });
+      }
+
+      toast.success("Rəy silindi");
+    } catch (err) {
+      toast.error("Rəy silinmədi");
     }
   };
 
@@ -671,10 +755,11 @@ const BusinessDashboard = () => {
         </div>
 
         <Tabs defaultValue="profile" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-3 md:w-auto md:inline-flex">
+          <TabsList className="grid w-full grid-cols-4 md:w-auto md:inline-flex">
             <TabsTrigger value="profile">Profil</TabsTrigger>
             <TabsTrigger value="categories">Kateqoriyalar</TabsTrigger>
             <TabsTrigger value="portfolio">Portfolio</TabsTrigger>
+            <TabsTrigger value="reviews">Rəylər</TabsTrigger>
           </TabsList>
 
           <TabsContent value="profile" className="space-y-6">
@@ -695,11 +780,21 @@ const BusinessDashboard = () => {
                     <p className="text-sm text-muted-foreground">Üz qabığı şəkli əlavə et</p>
                   </div>
                 )}
-                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-4">
                   {uploadingCover ? (
                     <Loader2 className="w-8 h-8 text-white animate-spin" />
                   ) : (
-                    <Camera className="w-8 h-8 text-white" />
+                    <>
+                      <Camera className="w-8 h-8 text-white" />
+                      {business.cover_image_url && (
+                        <button
+                          onClick={(e) => { e.stopPropagation(); handleDeleteCover(); }}
+                          className="p-2 bg-red-500 rounded-full hover:bg-red-600 transition-colors"
+                        >
+                          <Trash2 className="w-5 h-5 text-white" />
+                        </button>
+                      )}
+                    </>
                   )}
                 </div>
                 <input
@@ -727,11 +822,21 @@ const BusinessDashboard = () => {
                       <Building2 className="w-8 h-8 text-primary" />
                     </div>
                   )}
-                  <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                  <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
                     {uploadingLogo ? (
                       <Loader2 className="w-6 h-6 text-white animate-spin" />
                     ) : (
-                      <Camera className="w-6 h-6 text-white" />
+                      <>
+                        <Camera className="w-5 h-5 text-white" />
+                        {business.logo_url && (
+                          <button
+                            onClick={(e) => { e.stopPropagation(); handleDeleteLogo(); }}
+                            className="p-1 bg-red-500 rounded-full hover:bg-red-600 transition-colors"
+                          >
+                            <Trash2 className="w-4 h-4 text-white" />
+                          </button>
+                        )}
+                      </>
                     )}
                   </div>
                   <input
@@ -880,11 +985,10 @@ const BusinessDashboard = () => {
                         <button
                           key={sub.id}
                           onClick={() => handleCategoryToggle(sub.id)}
-                          className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
-                            selectedCategories.includes(sub.id)
-                              ? "bg-primary text-primary-foreground"
-                              : "bg-muted hover:bg-muted/80 text-foreground"
-                          }`}
+                          className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${selectedCategories.includes(sub.id)
+                            ? "bg-primary text-primary-foreground"
+                            : "bg-muted hover:bg-muted/80 text-foreground"
+                            }`}
                         >
                           {sub.name_az}
                         </button>
@@ -958,6 +1062,93 @@ const BusinessDashboard = () => {
                       </div>
                     </div>
                   ))}
+                </div>
+              )}
+            </div>
+          </TabsContent>
+
+          {/* Reviews Tab */}
+          <TabsContent value="reviews" className="space-y-4">
+            <div className="glass-card rounded-2xl p-6">
+              <div className="flex items-center justify-between mb-6">
+                <h3 className="font-serif text-xl text-foreground">Rəylər ({reviews.length})</h3>
+              </div>
+
+              {reviews.length === 0 ? (
+                <div className="text-center py-12">
+                  <MessageCircle className="w-12 h-12 text-muted-foreground mx-auto mb-3" />
+                  <p className="text-muted-foreground">Hələ heç bir rəy yoxdur</p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {reviews.map((review) => {
+                    let reviewerName = "Anonim";
+                    let reviewText = "";
+                    let reviewImages: string[] = [];
+
+                    try {
+                      if (review.comment && review.comment.startsWith("{")) {
+                        const parsed = JSON.parse(review.comment);
+                        reviewerName = parsed.name || "Anonim";
+                        reviewText = parsed.text || "";
+                        reviewImages = parsed.images || [];
+                      } else {
+                        reviewText = review.comment || "";
+                      }
+                    } catch (e) {
+                      reviewText = review.comment || "";
+                    }
+
+                    return (
+                      <div key={review.id} className="border border-border rounded-xl p-4">
+                        <div className="flex items-start justify-between mb-3">
+                          <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center text-foreground font-medium">
+                              {reviewerName.charAt(0).toUpperCase()}
+                            </div>
+                            <div>
+                              <div className="font-medium text-foreground">{reviewerName}</div>
+                              <div className="text-xs text-muted-foreground">
+                                {new Date(review.created_at).toLocaleDateString("az-AZ")}
+                              </div>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <div className="flex items-center gap-1">
+                              {Array.from({ length: 5 }).map((_, i) => (
+                                <Star
+                                  key={i}
+                                  className={`w-4 h-4 ${i < review.rating ? "text-amber-500 fill-current" : "text-muted"}`}
+                                />
+                              ))}
+                            </div>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8 text-red-500 hover:text-red-600 hover:bg-red-100"
+                              onClick={() => handleDeleteReview(review.id, review.comment)}
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+                          </div>
+                        </div>
+
+                        {reviewText && (
+                          <p className="text-foreground/90 mb-3">{reviewText}</p>
+                        )}
+
+                        {reviewImages.length > 0 && (
+                          <div className="flex gap-2 flex-wrap">
+                            {reviewImages.map((imgUrl, idx) => (
+                              <div key={idx} className="relative w-16 h-16 rounded-lg overflow-hidden group">
+                                <img src={imgUrl} alt="" className="w-full h-full object-cover" />
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
                 </div>
               )}
             </div>

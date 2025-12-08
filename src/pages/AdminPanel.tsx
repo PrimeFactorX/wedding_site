@@ -62,25 +62,28 @@ const AdminPanel = () => {
   const [showCategoryDialog, setShowCategoryDialog] = useState(false);
   const [processingId, setProcessingId] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (!authLoading) {
-      if (!user) {
-        navigate("/auth");
-        return;
-      }
-      if (userRole !== "admin") {
-        toast.error("Bu səhifəyə girişiniz yoxdur");
-        navigate("/");
-        return;
-      }
-    }
-  }, [user, authLoading, userRole, navigate]);
+  // Check if user is admin (by role OR by email OR by localStorage flag)
+  const isLocalAdmin = localStorage.getItem("isAdmin") === "true";
+  const isAdmin = userRole === "admin" || user?.email === "huseynov06ali@gmail.com" || isLocalAdmin;
 
   useEffect(() => {
-    if (userRole === "admin") {
+    if (!authLoading) {
+      if (!isAdmin) {
+        navigate("/admin-login");
+        return;
+      }
+      // If admin via localStorage, fetch data immediately
+      if (isLocalAdmin) {
+        fetchData();
+      }
+    }
+  }, [authLoading, isAdmin, navigate]);
+
+  useEffect(() => {
+    if (isAdmin && !isLocalAdmin) {
       fetchData();
     }
-  }, [userRole]);
+  }, [isAdmin]);
 
   const fetchData = async () => {
     try {
@@ -192,13 +195,13 @@ const AdminPanel = () => {
 
   const openCategoryDialog = async (business: Business) => {
     setSelectedBusiness(business);
-    
+
     // Fetch existing services for this business
     const { data } = await supabase
       .from("business_services")
       .select("subcategory_id")
       .eq("business_id", business.id);
-    
+
     setSelectedCategories(data?.map((s) => s.subcategory_id) || []);
     setShowCategoryDialog(true);
   };
@@ -260,7 +263,7 @@ const AdminPanel = () => {
     );
   }
 
-  if (userRole !== "admin") {
+  if (!isAdmin) {
     return null;
   }
 
@@ -432,11 +435,10 @@ const AdminPanel = () => {
                         <div className="flex items-center gap-2">
                           <h3 className="font-serif text-lg text-foreground">{business.name}</h3>
                           <span
-                            className={`px-2 py-0.5 text-xs rounded-full ${
-                              business.is_active
-                                ? "bg-green-500/10 text-green-600"
-                                : "bg-red-500/10 text-red-600"
-                            }`}
+                            className={`px-2 py-0.5 text-xs rounded-full ${business.is_active
+                              ? "bg-green-500/10 text-green-600"
+                              : "bg-red-500/10 text-red-600"
+                              }`}
                           >
                             {business.is_active ? "Aktiv" : "Deaktiv"}
                           </span>
@@ -490,11 +492,10 @@ const AdminPanel = () => {
                     <button
                       key={sub.id}
                       onClick={() => handleCategoryToggle(sub.id)}
-                      className={`text-left px-3 py-2 rounded-lg text-sm transition-colors ${
-                        selectedCategories.includes(sub.id)
-                          ? "bg-primary text-primary-foreground"
-                          : "bg-muted hover:bg-muted/80 text-foreground"
-                      }`}
+                      className={`text-left px-3 py-2 rounded-lg text-sm transition-colors ${selectedCategories.includes(sub.id)
+                        ? "bg-primary text-primary-foreground"
+                        : "bg-muted hover:bg-muted/80 text-foreground"
+                        }`}
                     >
                       {sub.name_az}
                     </button>

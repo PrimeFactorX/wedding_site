@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import heroBg from "@/assets/hero-bg.jpg";
 import { Search } from "lucide-react";
 
@@ -11,6 +12,8 @@ const animatedTexts = [
 
 const HeroSection = () => {
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [searchQuery, setSearchQuery] = useState("");
+  const navigate = useNavigate();
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -18,6 +21,13 @@ const HeroSection = () => {
     }, 2500);
     return () => clearInterval(interval);
   }, []);
+
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (searchQuery.trim()) {
+      navigate(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
+    }
+  };
 
   return (
     <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
@@ -39,11 +49,10 @@ const HeroSection = () => {
           {animatedTexts.map((text, index) => (
             <h1
               key={text}
-              className={`font-serif text-5xl md:text-7xl lg:text-8xl font-medium text-foreground absolute inset-0 flex items-center justify-center transition-all duration-700 ease-out ${
-                index === currentIndex
+              className={`font-serif text-5xl md:text-7xl lg:text-8xl font-medium text-foreground absolute inset-0 flex items-center justify-center transition-all duration-700 ease-out ${index === currentIndex
                   ? "opacity-100 translate-y-0"
                   : "opacity-0 translate-y-6 pointer-events-none"
-              }`}
+                }`}
             >
               {text}
             </h1>
@@ -61,21 +70,26 @@ const HeroSection = () => {
         </p>
 
         {/* Search Bar */}
-        <div className="relative max-w-xl mx-auto animate-fade-in animation-delay-600">
+        <form onSubmit={handleSearch} className="relative max-w-xl mx-auto animate-fade-in animation-delay-600">
           <div className="glass-card rounded-full p-2 flex items-center gap-3 transition-all duration-300 hover:shadow-glass-hover">
             <div className="flex-1 flex items-center gap-3 px-4">
-              <Search className="w-5 h-5 text-muted-foreground" />
+              <Search className="w-5 h-5 text-muted-foreground flex-shrink-0" />
               <input
                 type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Biznes adı, kateqoriya və ya şəhər axtar..."
-                className="w-full bg-transparent border-none outline-none text-foreground placeholder:text-muted-foreground py-2"
+                className="w-full bg-transparent border-none outline-none text-foreground placeholder:text-muted-foreground py-2 cursor-text"
               />
             </div>
-            <button className="button-gradient text-primary-foreground px-6 py-3 rounded-full font-medium transition-all duration-300 hover:scale-105 hover:shadow-lg">
+            <button
+              type="submit"
+              className="button-gradient text-primary-foreground px-6 py-3 rounded-full font-medium transition-all duration-300 hover:scale-105 hover:shadow-lg cursor-pointer"
+            >
               Axtar
             </button>
           </div>
-        </div>
+        </form>
 
         {/* Scroll Indicator */}
         <div className="absolute bottom-8 left-1/2 -translate-x-1/2 animate-float">

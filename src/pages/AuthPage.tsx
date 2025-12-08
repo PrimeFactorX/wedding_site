@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Link, useSearchParams, useNavigate } from "react-router-dom";
-import { ArrowLeft, Mail, Lock, User, Phone, Eye, EyeOff, Loader2 } from "lucide-react";
+import { ArrowLeft, Mail, Lock, Phone, Eye, EyeOff, Loader2, Building2 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -9,7 +9,7 @@ const AuthPage = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const { user, loading: authLoading } = useAuth();
-  
+
   const initialMode = searchParams.get("mode") === "register" ? "register" : "login";
 
   const [mode, setMode] = useState<"login" | "register">(initialMode);
@@ -19,7 +19,7 @@ const AuthPage = () => {
   const [formData, setFormData] = useState({
     email: "",
     password: "",
-    name: "",
+    businessName: "",
     phone: "",
   });
 
@@ -53,13 +53,13 @@ const AuthPage = () => {
         toast.success("Uğurla daxil oldunuz!");
         navigate("/dashboard");
       } else {
-        const { error } = await supabase.auth.signUp({
+        const { data, error } = await supabase.auth.signUp({
           email: formData.email,
           password: formData.password,
           options: {
             emailRedirectTo: `${window.location.origin}/`,
             data: {
-              full_name: formData.name,
+              full_name: formData.businessName,
               phone: formData.phone,
             },
           },
@@ -74,31 +74,18 @@ const AuthPage = () => {
           return;
         }
 
+        // Set business role
+        if (data.user) {
+          await supabase
+            .from("user_roles")
+            .upsert({ user_id: data.user.id, role: "business" }, { onConflict: "user_id" });
+        }
+
         toast.success("Qeydiyyat tamamlandı! Daxil olun.");
         setMode("login");
       }
     } catch (error) {
       toast.error("Xəta baş verdi. Yenidən cəhd edin.");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleGoogleLogin = async () => {
-    setLoading(true);
-    try {
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider: "google",
-        options: {
-          redirectTo: `${window.location.origin}/`,
-        },
-      });
-
-      if (error) {
-        toast.error(error.message);
-      }
-    } catch (error) {
-      toast.error("Google ilə daxil olmaq alınmadı");
     } finally {
       setLoading(false);
     }
@@ -139,9 +126,7 @@ const AuthPage = () => {
               <span className="text-sm text-muted-foreground">.az</span>
             </Link>
             <p className="text-muted-foreground mt-2">
-              {mode === "login"
-                ? "Hesabınıza daxil olun"
-                : "Biznesinizi qeydiyyatdan keçirin"}
+              Biznes hesabınız üçün
             </p>
           </div>
 
@@ -151,25 +136,29 @@ const AuthPage = () => {
             <div className="flex gap-1 p-1 bg-muted rounded-lg mb-6">
               <button
                 onClick={() => setMode("login")}
-                className={`flex-1 py-2.5 text-sm font-medium rounded-md transition-all ${
-                  mode === "login"
+                className={`flex-1 py-2.5 text-sm font-medium rounded-md transition-all cursor-pointer ${mode === "login"
                     ? "bg-background text-foreground shadow-sm"
                     : "text-muted-foreground hover:text-foreground"
-                }`}
+                  }`}
               >
                 Daxil ol
               </button>
               <button
                 onClick={() => setMode("register")}
-                className={`flex-1 py-2.5 text-sm font-medium rounded-md transition-all ${
-                  mode === "register"
+                className={`flex-1 py-2.5 text-sm font-medium rounded-md transition-all cursor-pointer ${mode === "register"
                     ? "bg-background text-foreground shadow-sm"
                     : "text-muted-foreground hover:text-foreground"
-                }`}
+                  }`}
               >
                 Qeydiyyat
               </button>
             </div>
+
+            <p className="text-center text-muted-foreground mb-6">
+              {mode === "login"
+                ? "Biznes hesabınıza daxil olun"
+                : "Biznesinizi qeydiyyatdan keçirin"}
+            </p>
 
             {/* Form */}
             <form onSubmit={handleSubmit} className="space-y-4">
@@ -179,15 +168,15 @@ const AuthPage = () => {
                     Biznes adı
                   </label>
                   <div className="relative">
-                    <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+                    <Building2 className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
                     <input
                       type="text"
-                      value={formData.name}
+                      value={formData.businessName}
                       onChange={(e) =>
-                        setFormData({ ...formData, name: e.target.value })
+                        setFormData({ ...formData, businessName: e.target.value })
                       }
                       placeholder="Biznesinizin adı"
-                      className="w-full pl-10 pr-4 py-3 rounded-xl border border-border bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
+                      className="w-full pl-10 pr-4 py-3 rounded-xl border border-border bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all cursor-text"
                       required
                     />
                   </div>
@@ -206,8 +195,8 @@ const AuthPage = () => {
                     onChange={(e) =>
                       setFormData({ ...formData, email: e.target.value })
                     }
-                    placeholder="sizin@email.com"
-                    className="w-full pl-10 pr-4 py-3 rounded-xl border border-border bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
+                    placeholder="biznes@email.com"
+                    className="w-full pl-10 pr-4 py-3 rounded-xl border border-border bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all cursor-text"
                     required
                   />
                 </div>
@@ -227,7 +216,7 @@ const AuthPage = () => {
                         setFormData({ ...formData, phone: e.target.value })
                       }
                       placeholder="+994 50 123 45 67"
-                      className="w-full pl-10 pr-4 py-3 rounded-xl border border-border bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
+                      className="w-full pl-10 pr-4 py-3 rounded-xl border border-border bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all cursor-text"
                     />
                   </div>
                 </div>
@@ -246,81 +235,29 @@ const AuthPage = () => {
                       setFormData({ ...formData, password: e.target.value })
                     }
                     placeholder="••••••••"
-                    className="w-full pl-10 pr-12 py-3 rounded-xl border border-border bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
+                    className="w-full pl-10 pr-12 py-3 rounded-xl border border-border bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all cursor-text"
                     required
                     minLength={6}
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
                   >
-                    {showPassword ? (
-                      <EyeOff className="w-5 h-5" />
-                    ) : (
-                      <Eye className="w-5 h-5" />
-                    )}
+                    {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                   </button>
                 </div>
               </div>
 
-              {mode === "login" && (
-                <div className="text-right">
-                  <Link
-                    to="/forgot-password"
-                    className="text-sm text-primary hover:underline"
-                  >
-                    Şifrəni unutmusunuz?
-                  </Link>
-                </div>
-              )}
-
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full button-gradient text-primary-foreground py-3.5 rounded-xl font-medium transition-all duration-300 hover:scale-[1.02] hover:shadow-lg disabled:opacity-50 disabled:hover:scale-100 flex items-center justify-center gap-2"
+                className="w-full button-gradient text-primary-foreground py-3.5 rounded-xl font-medium transition-all duration-300 hover:scale-[1.02] hover:shadow-lg disabled:opacity-50 disabled:hover:scale-100 flex items-center justify-center gap-2 cursor-pointer"
               >
                 {loading && <Loader2 className="w-4 h-4 animate-spin" />}
                 {mode === "login" ? "Daxil ol" : "Qeydiyyatdan keç"}
               </button>
             </form>
-
-            {/* Divider */}
-            <div className="flex items-center gap-4 my-6">
-              <div className="flex-1 h-px bg-border" />
-              <span className="text-sm text-muted-foreground">və ya</span>
-              <div className="flex-1 h-px bg-border" />
-            </div>
-
-            {/* Social Login */}
-            <button
-              type="button"
-              disabled={loading}
-              className="w-full flex items-center justify-center gap-3 py-3 rounded-xl border border-border bg-background hover:bg-muted transition-colors disabled:opacity-50"
-              onClick={handleGoogleLogin}
-            >
-              <svg className="w-5 h-5" viewBox="0 0 24 24">
-                <path
-                  fill="#4285F4"
-                  d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
-                />
-                <path
-                  fill="#34A853"
-                  d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
-                />
-                <path
-                  fill="#FBBC05"
-                  d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
-                />
-                <path
-                  fill="#EA4335"
-                  d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
-                />
-              </svg>
-              <span className="text-foreground font-medium">
-                Google ilə davam et
-              </span>
-            </button>
           </div>
 
           {/* Terms */}

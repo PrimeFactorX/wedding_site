@@ -14,6 +14,8 @@ import AboutPage from "./pages/AboutPage";
 import BusinessForPage from "./pages/BusinessForPage";
 import BusinessDashboard from "./pages/BusinessDashboard";
 import AdminPanel from "./pages/AdminPanel";
+import AdminLogin from "./pages/AdminLogin";
+import SearchPage from "./pages/SearchPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -32,6 +34,8 @@ const App = () => (
             <Route path="/business" element={<BusinessForPage />} />
             <Route path="/dashboard" element={<BusinessDashboard />} />
             <Route path="/admin" element={<AdminPanel />} />
+            <Route path="/admin-login" element={<AdminLogin />} />
+            <Route path="/search" element={<SearchPage />} />
             <Route path="/category/:slug" element={<CategoryDetail />} />
             <Route path="/businesses/:categorySlug/:subService" element={<BusinessList />} />
             <Route path="/business/:id" element={<BusinessProfile />} />
