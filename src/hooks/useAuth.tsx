@@ -85,6 +85,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
       const supabaseKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
 
+      if (!supabaseUrl || !supabaseKey) {
+        console.error("Missing Supabase Configuration", { supabaseUrl, hasKey: !!supabaseKey });
+        return { error: new Error("Konfiqurasiya xətası: API açarları tapılmadı. Vercel Environment Variables yoxlayın.") };
+      }
+
+      console.log("Attempting signup to:", `${supabaseUrl}/auth/v1/signup`);
+
       const response = await fetch(`${supabaseUrl}/auth/v1/signup`, {
         method: "POST",
         headers: {
@@ -105,10 +112,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       const data = await response.json();
 
       if (!response.ok) {
-        return { error: new Error(data.msg || data.error_description || "Signup failed") };
+        console.error("Signup failed response:", data);
+        return { error: new Error(data.msg || data.error_description || "Qeydiyyat xətası") };
       }
 
-      // Automatically sign in if we got a session (optional, but good for UX if confirm not required)
+      // Automatically sign in if we got a session
       if (data.access_token) {
         const { error: sessionError } = await supabase.auth.setSession({
           access_token: data.access_token,
@@ -117,22 +125,21 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         if (sessionError) console.error("Error setting session:", sessionError);
       }
 
-      // If signup successful and we have a user (even if requires confirmation), update their role
       const userId = data.id || data.user?.id;
       if (userId && role === "business") {
-        // We use the supabase client here for DB operations - usually less prone to the specific auth fetch failure
         const { error: roleError } = await supabase
           .from("user_roles")
           .upsert({ user_id: userId, role: "business" }, { onConflict: "user_id" });
 
-        if (roleError) {
-          console.error("Error updating role:", roleError);
-        }
+        if (roleError) console.error("Error updating role:", roleError);
       }
 
       return { error: null };
     } catch (err) {
-      console.error("Signup error:", err);
+      console.error("Signup exception:", err);
+      if (err instanceof TypeError && err.message.includes("Failed to fetch")) {
+        return { error: new Error("Serverə qoşulmaq mümkün olmadı. Zəhmət olmasa interneti, VPN-i və ya Reklam Engelleyici (AdBlock) yoxlayın.") };
+      }
       return { error: err as Error };
     }
   };
@@ -141,6 +148,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     try {
       const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
       const supabaseKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+
+      if (!supabaseUrl || !supabaseKey) {
+        console.error("Missing Supabase Configuration", { supabaseUrl, hasKey: !!supabaseKey });
+        return { error: new Error("Konfiqurasiya xətası: API açarları tapılmadı.") };
+      }
+
+      console.log("Attempting login to:", `${supabaseUrl}/auth/v1/token`);
 
       const response = await fetch(`${supabaseUrl}/auth/v1/token?grant_type=password`, {
         method: "POST",
@@ -157,7 +171,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       const data = await response.json();
 
       if (!response.ok) {
-        return { error: new Error(data.error_description || "Login failed") };
+        console.error("Login failed response:", data);
+        return { error: new Error(data.error_description || "Giriş xətası") };
       }
 
       const { error: sessionError } = await supabase.auth.setSession({
@@ -167,6 +182,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
       return { error: sessionError };
     } catch (err) {
+      console.error("Login exception:", err);
+      if (err instanceof TypeError && err.message.includes("Failed to fetch")) {
+        return { error: new Error("Serverə qoşulmaq mümkün olmadı. Zəhmət olmasa interneti, VPN-i yoxlayın.") };
+      }
       return { error: err as Error };
     }
   };
