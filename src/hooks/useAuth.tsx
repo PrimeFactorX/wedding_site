@@ -27,7 +27,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       (event, session) => {
         setSession(session);
         setUser(session?.user ?? null);
-        
+
         // Defer role fetching with setTimeout
         if (session?.user) {
           setTimeout(() => {
@@ -82,28 +82,48 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   ) => {
     try {
       const redirectUrl = `${window.location.origin}/`;
-      
-      const { data, error } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          emailRedirectTo: redirectUrl,
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+      const supabaseKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+
+      const response = await fetch(`${supabaseUrl}/auth/v1/signup`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "apikey": supabaseKey,
+        },
+        body: JSON.stringify({
+          email,
+          password,
           data: {
             full_name: fullName,
             phone: phone || null,
           },
-        },
+          gotrue_meta_security: {},
+        }),
       });
 
-      if (error) return { error };
+      const data = await response.json();
 
-      // If signup successful and we have a user, update their role if they chose business
-      if (data.user && role === "business") {
-        // The trigger will create the default 'customer' role, so we need to update it
+      if (!response.ok) {
+        return { error: new Error(data.msg || data.error_description || "Signup failed") };
+      }
+
+      // Automatically sign in if we got a session (optional, but good for UX if confirm not required)
+      if (data.access_token) {
+        const { error: sessionError } = await supabase.auth.setSession({
+          access_token: data.access_token,
+          refresh_token: data.refresh_token,
+        });
+        if (sessionError) console.error("Error setting session:", sessionError);
+      }
+
+      // If signup successful and we have a user (even if requires confirmation), update their role
+      const userId = data.id || data.user?.id;
+      if (userId && role === "business") {
+        // We use the supabase client here for DB operations - usually less prone to the specific auth fetch failure
         const { error: roleError } = await supabase
           .from("user_roles")
-          .update({ role: "business" })
-          .eq("user_id", data.user.id);
+          .upsert({ user_id: userId, role: "business" }, { onConflict: "user_id" });
 
         if (roleError) {
           console.error("Error updating role:", roleError);
@@ -112,17 +132,40 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
       return { error: null };
     } catch (err) {
+      console.error("Signup error:", err);
       return { error: err as Error };
     }
   };
 
   const signIn = async (email: string, password: string) => {
     try {
-      const { error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+      const supabaseKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+
+      const response = await fetch(`${supabaseUrl}/auth/v1/token?grant_type=password`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "apikey": supabaseKey,
+        },
+        body: JSON.stringify({
+          email,
+          password,
+        }),
       });
-      return { error };
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        return { error: new Error(data.error_description || "Login failed") };
+      }
+
+      const { error: sessionError } = await supabase.auth.setSession({
+        access_token: data.access_token,
+        refresh_token: data.refresh_token,
+      });
+
+      return { error: sessionError };
     } catch (err) {
       return { error: err as Error };
     }

@@ -8,7 +8,7 @@ import { useAuth } from "@/hooks/useAuth";
 const AuthPage = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  const { user, loading: authLoading } = useAuth();
+  const { user, loading: authLoading, signIn, signUp } = useAuth();
 
   const initialMode = searchParams.get("mode") === "register" ? "register" : "login";
 
@@ -36,10 +36,7 @@ const AuthPage = () => {
 
     try {
       if (mode === "login") {
-        const { error } = await supabase.auth.signInWithPassword({
-          email: formData.email,
-          password: formData.password,
-        });
+        const { error } = await signIn(formData.email, formData.password);
 
         if (error) {
           if (error.message === "Invalid login credentials") {
@@ -53,17 +50,13 @@ const AuthPage = () => {
         toast.success("Uğurla daxil oldunuz!");
         navigate("/dashboard");
       } else {
-        const { data, error } = await supabase.auth.signUp({
-          email: formData.email,
-          password: formData.password,
-          options: {
-            emailRedirectTo: `${window.location.origin}/`,
-            data: {
-              full_name: formData.businessName,
-              phone: formData.phone,
-            },
-          },
-        });
+        const { error } = await signUp(
+          formData.email,
+          formData.password,
+          formData.businessName,
+          "business",
+          formData.phone
+        );
 
         if (error) {
           if (error.message.includes("already registered")) {
@@ -72,13 +65,6 @@ const AuthPage = () => {
             toast.error(error.message);
           }
           return;
-        }
-
-        // Set business role
-        if (data.user) {
-          await supabase
-            .from("user_roles")
-            .upsert({ user_id: data.user.id, role: "business" }, { onConflict: "user_id" });
         }
 
         toast.success("Qeydiyyat tamamlandı! Daxil olun.");
@@ -137,8 +123,8 @@ const AuthPage = () => {
               <button
                 onClick={() => setMode("login")}
                 className={`flex-1 py-2.5 text-sm font-medium rounded-md transition-all cursor-pointer ${mode === "login"
-                    ? "bg-background text-foreground shadow-sm"
-                    : "text-muted-foreground hover:text-foreground"
+                  ? "bg-background text-foreground shadow-sm"
+                  : "text-muted-foreground hover:text-foreground"
                   }`}
               >
                 Daxil ol
@@ -146,8 +132,8 @@ const AuthPage = () => {
               <button
                 onClick={() => setMode("register")}
                 className={`flex-1 py-2.5 text-sm font-medium rounded-md transition-all cursor-pointer ${mode === "register"
-                    ? "bg-background text-foreground shadow-sm"
-                    : "text-muted-foreground hover:text-foreground"
+                  ? "bg-background text-foreground shadow-sm"
+                  : "text-muted-foreground hover:text-foreground"
                   }`}
               >
                 Qeydiyyat
