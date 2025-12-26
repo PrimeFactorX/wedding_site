@@ -91,34 +91,30 @@ const CategoryCard = ({
   return (
     <Link
       to={`/category/${category.slug}`}
-      className={`group relative overflow-hidden rounded-2xl transition-all duration-300 ease-out ${
-        isHovered ? "scale-105 z-10" : "scale-100"
-      }`}
+      className={`group relative overflow-hidden rounded-2xl transition-all duration-300 ease-out ${isHovered ? "scale-105 z-10" : "scale-100"
+        }`}
       onMouseEnter={onHover}
       onMouseLeave={onLeave}
     >
       {/* Card */}
       <div
-        className={`relative aspect-square glass-card overflow-hidden transition-all duration-300 ${
-          isHovered
-            ? "shadow-glass-hover border-primary/40"
-            : "shadow-glass"
-        }`}
+        className={`relative aspect-square glass-card overflow-hidden transition-all duration-300 ${isHovered
+          ? "shadow-glass-hover border-primary/40"
+          : "shadow-glass"
+          }`}
       >
         {/* Image */}
         <img
           src={category.image}
           alt={category.title}
-          className={`absolute inset-0 w-full h-full object-cover transition-all duration-500 ${
-            isHovered ? "scale-110" : "scale-100"
-          }`}
+          className={`absolute inset-0 w-full h-full object-cover transition-all duration-500 ${isHovered ? "scale-110" : "scale-100"
+            }`}
         />
 
         {/* Gradient Overlay */}
         <div
-          className={`absolute inset-0 bg-gradient-to-t from-foreground/80 via-foreground/20 to-transparent transition-opacity duration-300 ${
-            isHovered ? "opacity-90" : "opacity-70"
-          }`}
+          className={`absolute inset-0 bg-gradient-to-t from-foreground/80 via-foreground/20 to-transparent transition-opacity duration-300 ${isHovered ? "opacity-90" : "opacity-70"
+            }`}
         />
 
         {/* Glow Effect */}
@@ -134,9 +130,8 @@ const CategoryCard = ({
 
           {/* Arrow indicator */}
           <div
-            className={`flex items-center gap-2 mt-2 text-background/80 text-sm transition-all duration-300 ${
-              isHovered ? "opacity-100 translate-x-0" : "opacity-0 -translate-x-2"
-            }`}
+            className={`flex items-center gap-2 mt-2 text-background/80 text-sm transition-all duration-300 ${isHovered ? "opacity-100 translate-x-0" : "opacity-0 -translate-x-2"
+              }`}
           >
             <span>Kəşf et</span>
             <ChevronRight className="w-4 h-4" />
@@ -165,16 +160,14 @@ const CategoriesGrid = () => {
 
         {/* Grid */}
         <div
-          className={`grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6 transition-all duration-300 ${
-            hoveredId ? "fade-siblings" : ""
-          }`}
+          className={`grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6 transition-all duration-300 ${hoveredId ? "fade-siblings" : ""
+            }`}
         >
           {categories.map((category) => (
             <div
               key={category.id}
-              className={`transition-opacity duration-300 ${
-                hoveredId && hoveredId !== category.id ? "opacity-90" : "opacity-100"
-              }`}
+              className={`transition-opacity duration-300 ${hoveredId && hoveredId !== category.id ? "opacity-90" : "opacity-100"
+                }`}
             >
               <CategoryCard
                 category={category}

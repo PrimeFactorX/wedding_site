@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
+import { useSubscription } from "@/hooks/useSubscription";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import {
@@ -21,6 +22,8 @@ import {
   Tag,
   DollarSign,
   Shield,
+  CreditCard,
+  Check,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -80,6 +83,8 @@ const BusinessDashboard = () => {
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [savingCategories, setSavingCategories] = useState(false);
   const [reviews, setReviews] = useState<any[]>([]);
+
+  const { plans, subscription, subscribe, checkLimit, refreshSubscription } = useSubscription(business?.id || null);
 
   const logoInputRef = useRef<HTMLInputElement>(null);
   const coverInputRef = useRef<HTMLInputElement>(null);
@@ -237,8 +242,28 @@ const BusinessDashboard = () => {
         .update({ role: "business" })
         .eq("user_id", user.id);
 
+      // Assign Basic Plan
+      const basicPlan = plans.find(p => p.name === "Başlanğıc");
+      if (basicPlan) {
+        const startDate = new Date();
+        const endDate = new Date();
+        endDate.setMonth(endDate.getMonth() + basicPlan.duration_months);
+
+        await supabase
+          .from("business_subscriptions")
+          .insert({
+            business_id: data.id,
+            plan_id: basicPlan.id,
+            status: "active",
+            start_date: startDate.toISOString(),
+            end_date: endDate.toISOString(),
+          });
+      }
+
       setBusiness(data as BusinessData);
       toast.success("Biznes uğurla yaradıldı!");
+      // Refresh subscription to get the new state
+      refreshSubscription();
     } catch (err) {
       console.error("Error:", err);
       toast.error("Xəta baş verdi");
@@ -394,6 +419,11 @@ const BusinessDashboard = () => {
   const handleMediaUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files || !business) return;
+
+    if (!checkLimit(media.length, "image")) {
+      toast.error("Şəkil yükləmə limiti doldu. Planınızı yüksəldin.");
+      return;
+    }
 
     setUploadingMedia(true);
     try {
@@ -760,6 +790,7 @@ const BusinessDashboard = () => {
             <TabsTrigger value="categories">Kateqoriyalar</TabsTrigger>
             <TabsTrigger value="portfolio">Portfolio</TabsTrigger>
             <TabsTrigger value="reviews">Rəylər</TabsTrigger>
+            <TabsTrigger value="subscription">Abunəlik</TabsTrigger>
           </TabsList>
 
           <TabsContent value="profile" className="space-y-6">
@@ -1151,6 +1182,115 @@ const BusinessDashboard = () => {
                   })}
                 </div>
               )}
+            </div>
+          </TabsContent>
+
+          {/* Subscription Tab */}
+          <TabsContent value="subscription" className="space-y-6">
+            <div className="glass-card rounded-2xl p-6">
+              <h3 className="font-serif text-xl text-foreground mb-6">Abunəlik Planı</h3>
+
+              {/* Current Plan */}
+              <div className="mb-8 p-6 rounded-xl bg-primary/5 border border-primary/10">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-muted-foreground mb-1">Cari plan</p>
+                    <h4 className="text-2xl font-bold text-foreground">
+                      {subscription?.plan?.name || "Plan yoxdur"}
+                    </h4>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-sm text-muted-foreground mb-1">Status</p>
+                    <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${subscription?.status === 'active'
+                      ? 'bg-green-500/10 text-green-600'
+                      : 'bg-red-500/10 text-red-600'
+                      }`}>
+                      {subscription?.status === 'active' ? 'Aktiv' : 'Passiv'}
+                    </span>
+                  </div>
+                </div>
+                {subscription?.plan?.name === "Başlanğıc" && (
+                  <div className="mt-4 pt-4 border-t border-dashed border-primary/20">
+                    <p className="text-sm text-muted-foreground">
+                      <span className="font-medium text-foreground">5 şəkil</span> limitiniz var.
+                      Daha çox imkanlar üçün planı yüksəldin.
+                    </p>
+                  </div>
+                )}
+              </div>
+
+              {/* Plans Grid */}
+              <div className="grid md:grid-cols-3 gap-6">
+                {plans.map((plan) => (
+                  <div
+                    key={plan.id}
+                    className={`relative rounded-xl p-6 border transition-all duration-300 ${subscription?.plan_id === plan.id
+                      ? "border-primary bg-primary/5 shadow-md"
+                      : "border-border hover:border-primary/50 hover:shadow-sm"
+                      }`}
+                  >
+                    {subscription?.plan_id === plan.id && (
+                      <div className="absolute top-0 right-0 -mt-2 -mr-2 bg-primary text-primary-foreground text-xs font-bold px-3 py-1 rounded-full shadow-sm">
+                        Seçilib
+                      </div>
+                    )}
+
+                    <h4 className="font-serif text-xl font-medium mb-2">{plan.name}</h4>
+                    <div className="flex items-baseline gap-1 mb-4">
+                      <span className="text-3xl font-bold">{plan.price} ₼</span>
+                      <span className="text-muted-foreground">/ay</span>
+                    </div>
+
+                    <ul className="space-y-3 mb-6">
+                      {plan.name === "Başlanğıc" && (
+                        <>
+                          <li className="flex items-center gap-2 text-sm text-muted-foreground">
+                            <Check className="w-4 h-4 text-green-500" /> 5 şəkil yükləmə
+                          </li>
+                          <li className="flex items-center gap-2 text-sm text-muted-foreground">
+                            <Check className="w-4 h-4 text-green-500" /> Əsas profil
+                          </li>
+                        </>
+                      )}
+                      {plan.name === "Professional" && (
+                        <>
+                          <li className="flex items-center gap-2 text-sm text-muted-foreground">
+                            <Check className="w-4 h-4 text-green-500" /> Limitsiz şəkil
+                          </li>
+                          <li className="flex items-center gap-2 text-sm text-muted-foreground">
+                            <Check className="w-4 h-4 text-green-500" /> Öncəlikli sıralama
+                          </li>
+                          <li className="flex items-center gap-2 text-sm text-muted-foreground">
+                            <Check className="w-4 h-4 text-green-500" /> Rəylərə cavab
+                          </li>
+                        </>
+                      )}
+                      {plan.name === "Premium" && (
+                        <>
+                          <li className="flex items-center gap-2 text-sm text-muted-foreground">
+                            <Check className="w-4 h-4 text-green-500" /> Bütün imkanlar
+                          </li>
+                          <li className="flex items-center gap-2 text-sm text-muted-foreground">
+                            <Check className="w-4 h-4 text-green-500" /> Video yükləmə
+                          </li>
+                          <li className="flex items-center gap-2 text-sm text-muted-foreground">
+                            <Check className="w-4 h-4 text-green-500" /> VIP nişanı
+                          </li>
+                        </>
+                      )}
+                    </ul>
+
+                    <Button
+                      onClick={() => subscribe(plan.id)}
+                      disabled={subscription?.plan_id === plan.id}
+                      variant={subscription?.plan_id === plan.id ? "secondary" : "default"}
+                      className="w-full"
+                    >
+                      {subscription?.plan_id === plan.id ? "Cari Plan" : "Planı Seç"}
+                    </Button>
+                  </div>
+                ))}
+              </div>
             </div>
           </TabsContent>
         </Tabs>

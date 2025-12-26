@@ -49,6 +49,12 @@ interface Category {
   }[];
 }
 
+interface SubscriptionPlan {
+  id: string;
+  name: string;
+  price: number;
+}
+
 const AdminPanel = () => {
   const { user, loading: authLoading, signOut, userRole } = useAuth();
   const navigate = useNavigate();
@@ -60,6 +66,9 @@ const AdminPanel = () => {
   const [categories, setCategories] = useState<Category[]>([]);
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [showCategoryDialog, setShowCategoryDialog] = useState(false);
+  const [showPlanDialog, setShowPlanDialog] = useState(false);
+  const [plans, setPlans] = useState<SubscriptionPlan[]>([]);
+  const [selectedPlanId, setSelectedPlanId] = useState<string>("");
   const [processingId, setProcessingId] = useState<string | null>(null);
 
   // Check if user is admin (by role OR by email OR by localStorage flag)
@@ -117,6 +126,16 @@ const AdminPanel = () => {
           })
         );
         setCategories(catsWithSubs);
+      }
+
+      // Fetch subscription plans
+      const { data: plansData } = await supabase
+        .from("subscription_plans")
+        .select("id, name, price")
+        .order("price");
+
+      if (plansData) {
+        setPlans(plansData);
       }
     } catch (err) {
       console.error("Error:", err);
@@ -243,6 +262,50 @@ const AdminPanel = () => {
       setShowCategoryDialog(false);
     } catch (err) {
       toast.error("Xəta baş verdi");
+    }
+  };
+
+  /* Plan Management Functions */
+  const openPlanDialog = async (business: Business) => {
+    setSelectedBusiness(business);
+
+    // Fetch current ACTIVE subscription
+    const { data } = await supabase
+      .from("business_subscriptions")
+      .select("plan_id")
+      .eq("business_id", business.id)
+      .eq("status", "active")
+      .maybeSingle();
+
+    setSelectedPlanId(data?.plan_id || "");
+    setShowPlanDialog(true);
+  };
+
+  const handlePlanSave = async () => {
+    if (!selectedBusiness || !selectedPlanId) return;
+
+    try {
+      setProcessingId(selectedBusiness.id);
+
+      // Deactivate current active subscriptions
+      // Use RPC to bypass RLS and handle transaction safely
+      const { error } = await supabase.rpc("assign_business_plan", {
+        p_business_id: selectedBusiness.id,
+        p_plan_id: selectedPlanId,
+      });
+
+      if (error) {
+        console.error("RPC Error:", error);
+        throw error;
+      }
+
+      toast.success("Plan yeniləndi!");
+      setShowPlanDialog(false);
+    } catch (error) {
+      console.error(error);
+      toast.error("Xəta baş verdi");
+    } finally {
+      setProcessingId(null);
     }
   };
 
@@ -455,6 +518,13 @@ const AdminPanel = () => {
                         >
                           Kateqoriya
                         </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => openPlanDialog(business)}
+                        >
+                          Plan
+                        </Button>
                         <Link to={`/business/${business.id}`}>
                           <Button variant="outline" size="sm">
                             <Eye className="w-4 h-4" />
@@ -509,6 +579,49 @@ const AdminPanel = () => {
               Ləğv et
             </Button>
             <Button onClick={saveCategoryAssignments}>Yadda saxla</Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Plan Assignment Dialog */}
+      <Dialog open={showPlanDialog} onOpenChange={setShowPlanDialog}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Abunəlik Planını Dəyiş</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              {plans.map((plan) => (
+                <label
+                  key={plan.id}
+                  className={`flex items-center justify-between p-4 rounded-xl border cursor-pointer transition-all ${selectedPlanId === plan.id
+                    ? "border-primary bg-primary/5 ring-1 ring-primary"
+                    : "border-border hover:border-primary/50"
+                    }`}
+                >
+                  <div className="flex items-center gap-3">
+                    <input
+                      type="radio"
+                      name="plan"
+                      value={plan.id}
+                      checked={selectedPlanId === plan.id}
+                      onChange={() => setSelectedPlanId(plan.id)}
+                      className="w-4 h-4 text-primary"
+                    />
+                    <span className="font-medium">{plan.name}</span>
+                  </div>
+                  <span className="text-sm font-bold">{plan.price} ₼</span>
+                </label>
+              ))}
+            </div>
+          </div>
+          <div className="flex justify-end gap-2">
+            <Button variant="outline" onClick={() => setShowPlanDialog(false)}>
+              Ləğv et
+            </Button>
+            <Button onClick={handlePlanSave} disabled={!!processingId}>
+              {processingId ? <Loader2 className="w-4 h-4 animate-spin" /> : "Yadda saxla"}
+            </Button>
           </div>
         </DialogContent>
       </Dialog>

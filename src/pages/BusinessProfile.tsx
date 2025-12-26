@@ -66,6 +66,7 @@ const BusinessProfile = () => {
   const [loading, setLoading] = useState(true);
   const [selectedMedia, setSelectedMedia] = useState<number | null>(null);
   const [showReviewForm, setShowReviewForm] = useState(false);
+  const [plan, setPlan] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchBusinessData = async () => {
@@ -87,6 +88,19 @@ const BusinessProfile = () => {
         }
 
         setBusiness(businessData);
+
+        // Fetch active subscription
+        const { data: subData } = await supabase
+          .from("business_subscriptions")
+          .select("plan:subscription_plans(name)")
+          .eq("business_id", id)
+          .eq("status", "active")
+          .maybeSingle();
+
+        if (subData?.plan) {
+          // @ts-ignore
+          setPlan(subData.plan.name);
+        }
 
         // Increment view count
         await supabase
@@ -262,6 +276,16 @@ const BusinessProfile = () => {
               <div className="flex-1 text-center md:text-left">
                 <h1 className="font-serif text-3xl md:text-4xl text-foreground mb-2">
                   {business.name}
+                  {plan === "Premium" && (
+                    <span className="ml-3 inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-gradient-to-r from-amber-500 to-orange-500 text-white shadow-lg shadow-amber-500/20">
+                      PRO
+                    </span>
+                  )}
+                  {plan === "Professional" && (
+                    <span className="ml-3 inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-gradient-to-r from-blue-500 to-cyan-500 text-white shadow-lg shadow-blue-500/20">
+                      PRO
+                    </span>
+                  )}
                 </h1>
 
                 <div className="flex items-center justify-center md:justify-start gap-2 text-amber-500 mb-3">

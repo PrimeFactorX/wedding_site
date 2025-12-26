@@ -91,7 +91,7 @@ const BusinessForPage = () => {
               Biznesinizi böyüdün
             </h1>
             <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto mb-8">
-              Memora.az-da biznesinizi qeydiyyatdan keçirin və minlərlə potensial 
+              Memora.az-da biznesinizi qeydiyyatdan keçirin və minlərlə potensial
               müştəriyə çatın. Toy və bayram sektorunda ən böyük platformada yer alın.
             </p>
             <Link
@@ -190,11 +190,10 @@ const BusinessForPage = () => {
               {plans.map((plan, index) => (
                 <div
                   key={plan.name}
-                  className={`rounded-2xl p-6 ${
-                    plan.highlighted
+                  className={`rounded-2xl p-6 ${plan.highlighted
                       ? "bg-primary text-primary-foreground ring-4 ring-primary/20"
                       : "glass-card"
-                  }`}
+                    }`}
                 >
                   <h3 className="font-serif text-2xl mb-2">{plan.name}</h3>
                   <div className="mb-6">
@@ -216,28 +215,23 @@ const BusinessForPage = () => {
                   {index === 0 ? (
                     <Link
                       to="/auth?mode=register"
-                      className={`block text-center py-3 rounded-full font-medium transition-all duration-300 ${
-                        plan.highlighted
+                      className={`block text-center py-3 rounded-full font-medium transition-all duration-300 ${plan.highlighted
                           ? "bg-background text-foreground hover:bg-background/90"
                           : "button-gradient text-primary-foreground"
-                      }`}
+                        }`}
                     >
                       Pulsuz başla
                     </Link>
                   ) : (
-                    <button
-                      onClick={() => {
-                        const el = document.getElementById('pricing');
-                        el?.scrollIntoView({ behavior: 'smooth' });
-                      }}
-                      className={`w-full text-center py-3 rounded-full font-medium transition-all duration-300 ${
-                        plan.highlighted
+                    <Link
+                      to="/auth?mode=register"
+                      className={`block text-center py-3 rounded-full font-medium transition-all duration-300 ${plan.highlighted
                           ? "bg-background text-foreground hover:bg-background/90"
                           : "button-gradient text-primary-foreground"
-                      }`}
+                        }`}
                     >
-                      Tezliklə
-                    </button>
+                      Seç
+                    </Link>
                   )}
                 </div>
               ))}
