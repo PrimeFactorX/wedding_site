@@ -28,7 +28,7 @@ const FeaturesSection = () => {
         {/* Section Header */}
         <div className="text-center mb-12 md:mb-16">
           <h2 className="font-serif text-3xl md:text-4xl lg:text-5xl text-foreground mb-4">
-            Niyə Bayram.az?
+            Niyə Memora.az?
           </h2>
           <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
             Sizin bayramınız bizim üçün vacibdir
