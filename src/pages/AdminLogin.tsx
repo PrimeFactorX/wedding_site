@@ -49,6 +49,7 @@ const AdminLogin = () => {
                 toast.error("Xəta baş verdi");
             }
         } else {
+            localStorage.removeItem("isAdmin");
             toast.error("İstifadəçi adı və ya şifrə yanlışdır");
         }
 

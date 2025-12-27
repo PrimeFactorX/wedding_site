@@ -65,6 +65,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         return;
       }
 
+      console.log("Fetched user role for:", userId, "Role:", data?.role);
+
       if (data) {
         setUserRole(data.role as "customer" | "business" | "admin");
       }

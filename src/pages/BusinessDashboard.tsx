@@ -553,23 +553,8 @@ const BusinessDashboard = () => {
     );
   }
 
-  // Redirect admin to admin panel
-  if (userRole === "admin") {
-    return (
-      <div className="min-h-screen bg-background flex flex-col items-center justify-center gap-4">
-        <Shield className="w-16 h-16 text-primary" />
-        <h1 className="font-serif text-2xl">Siz admin hesabındasınız</h1>
-        <div className="flex gap-4">
-          <Link to="/admin">
-            <Button>Admin Panelinə keç</Button>
-          </Link>
-          <Button variant="outline" onClick={handleLogout}>
-            Çıxış
-          </Button>
-        </div>
-      </div>
-    );
-  }
+  // Removed admin check to allow access to dashboard for debugging/usability
+  // if (userRole === "admin") { ... }
 
   if (!business) {
     return (

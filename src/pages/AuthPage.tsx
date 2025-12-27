@@ -47,6 +47,8 @@ const AuthPage = () => {
           return;
         }
 
+        // Clear any dev/admin flags
+        localStorage.removeItem("isAdmin");
         toast.success("Uğurla daxil oldunuz!");
         navigate("/dashboard");
       } else {

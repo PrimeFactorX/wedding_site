@@ -436,9 +436,9 @@ const BusinessProfile = () => {
                           <div className="font-medium text-foreground">
                             {reviewerName}
                           </div>
-                          <div className="text-xs text-muted-foreground">
+                          {/* <div className="text-xs text-muted-foreground">
                             {new Date(review.created_at).toLocaleDateString("az-AZ")}
-                          </div>
+                          </div> */}
                         </div>
                         <div className="flex items-center gap-1">
                           {Array.from({ length: 5 }).map((_, i) => (
